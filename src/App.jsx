@@ -25,6 +25,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState('tokens');
   const [filterText, setFilterText] = useState('');
   const [testResult, setTestResult] = useState(null);
+  const [mobileView, setMobileView] = useState('both'); // 'editor' | 'results' | 'both'
 
   // Run initial lexer on mount
   useEffect(() => {
@@ -51,6 +52,10 @@ export function App() {
       setActiveTab('errors');
     } else {
       setActiveTab('tokens');
+    }
+
+    if (mobileView === 'editor') {
+      setMobileView('results');
     }
   };
 
@@ -98,6 +103,10 @@ export function App() {
       setParseStatus('success');
       setActiveTab('tree');
     }
+
+    if (mobileView === 'editor') {
+      setMobileView('results');
+    }
   };
 
   const handleSelectSample = (sampleKey) => {
@@ -140,7 +149,32 @@ export function App() {
         onRunTests={handleRunTests}
       />
 
-      <main className="workspace">
+      {/* Mobile Mode Switcher (visible on mobile / small screens) */}
+      <div className="mobile-view-bar">
+        <button
+          className={`mobile-view-btn ${mobileView === 'editor' ? 'active' : ''}`}
+          onClick={() => setMobileView('editor')}
+          type="button"
+        >
+          <span>📝</span> Editor
+        </button>
+        <button
+          className={`mobile-view-btn ${mobileView === 'results' ? 'active' : ''}`}
+          onClick={() => setMobileView('results')}
+          type="button"
+        >
+          <span>⚡</span> Analysis {totalErrors > 0 && <span className="badge badge-danger">{totalErrors}</span>}
+        </button>
+        <button
+          className={`mobile-view-btn ${mobileView === 'both' ? 'active' : ''}`}
+          onClick={() => setMobileView('both')}
+          type="button"
+        >
+          <span>⬍</span> Both
+        </button>
+      </div>
+
+      <main className={`workspace mobile-show-${mobileView}`}>
         <Editor
           source={source}
           onChange={(newSource) => setSource(newSource)}
