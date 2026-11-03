@@ -127,7 +127,26 @@ export function LanguageSpec() {
             <li><strong>Array Initializer Lists:</strong> <code>{'int arr[5] = {1, 2, 3, 4, 5};'}</code> or <code>{'int arr[] = {1, 2, 3};'}</code></li>
             <li><strong>Multidimensional Arrays:</strong> <code>{'int m[2][2] = {{1, 2}, {3, 4}};'}</code> and <code>m[0][1] = 99;</code></li>
             <li><strong>Member Access (<code>.</code> and <code>{'-&gt;'}</code>):</strong> <code>{'tokens[i].type = type;'}</code> or <code>{'node->val = 100;'}</code></li>
-            <li><strong>Library Imports:</strong> <code>{'#include <stdio.h>'}</code>, <code>{'#include <stdlib.h>'}</code></li>
+            <li><strong>Function Calls:</strong> <code>{'printf("%d", sum);'}</code>, <code>{'scanf("%d", &x);'}</code></li>
+          </ul>
+        </div>
+
+        <div className="spec-card">
+          <h4>10. Standard C Library Inclusions &amp; Preprocessor Validation</h4>
+          <ul>
+            <li><strong>All Standard C Libraries:</strong> <code>{'<stdio.h>'}</code>, <code>{'<stdlib.h>'}</code>, <code>{'<string.h>'}</code>, <code>{'<math.h>'}</code>, <code>{'<ctype.h>'}</code>, <code>{'<stdbool.h>'}</code>, <code>{'<stdint.h>'}</code>, <code>{'<time.h>'}</code>, <code>{'<limits.h>'}</code>, <code>{'<float.h>'}</code>, <code>{'<assert.h>'}</code>, <code>{'<errno.h>'}</code>, <code>{'<unistd.h>'}</code>, <code>{'<windows.h>'}</code>, <code>{'<conio.h>'}</code></li>
+            <li><strong>User Custom Headers:</strong> Enclosed in double quotes ending with <code>.h</code> (e.g. <code>{'#include "myheader.h"'}</code>)</li>
+            <li><strong>Directives Supported:</strong> <code>{'#include'}</code>, <code>{'#define'}</code>, <code>{'#undef'}</code>, <code>{'#ifdef'}</code>, <code>{'#ifndef'}</code>, <code>{'#endif'}</code>, <code>{'#pragma'}</code></li>
+            <li><strong>Syntax Traps &amp; Auto-Suggestions:</strong>
+              <ul>
+                <li>Misspelled directives: traps <code>{'#incude'}</code>, <code>{'#includ'}</code> &rarr; suggests <code>{'#include'}</code></li>
+                <li>Missing <code>.h</code>: traps <code>{'<stdio>'}</code>, <code>{'<math>'}</code> &rarr; suggests <code>{'<stdio.h>'}</code></li>
+                <li>Missing brackets/quotes: traps <code>{'#include stdio.h'}</code></li>
+                <li>C++ headers: traps <code>{'<iostream>'}</code>, <code>{'<vector>'}</code> &rarr; prompts for C headers</li>
+                <li>Typo detection: traps <code>{'<studio.h>'}</code> &rarr; suggests <code>{'<stdio.h>'}</code></li>
+                <li>Empty headers: traps <code>{'#include <>'}</code> and <code>{'#include ""'}</code></li>
+              </ul>
+            </li>
           </ul>
         </div>
       </div>

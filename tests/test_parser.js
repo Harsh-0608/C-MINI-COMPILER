@@ -719,6 +719,114 @@ console.log('\nSuite 20: Do-While Loops, Continue Statements, Multi-Word Types &
   assert(res5.errors.length === 0, "Functions and type casts with 'unsigned long long' and 'long long' parse with 0 errors");
 }
 
+// =========================================================================
+// Suite 21: Preprocessor Directives & Library Header Validation
+// =========================================================================
+{
+  console.log('\nSuite 21: Preprocessor Directives & Library Header Validation');
+
+  // 1. Valid standard C libraries parse with 0 errors
+  const validStdLibs = `#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <time.h>
+#include <ctype.h>
+int main() { return 0; }`;
+  const res1 = parseCode(validStdLibs);
+  assert(res1.errors.length === 0, "Standard C libraries (<stdio.h>, <stdlib.h>, <math.h>, etc.) parse with 0 errors");
+  assert(res1.cst.children[0].type === 'PreprocessorDirective', "Top AST node is PreprocessorDirective");
+
+  // 2. Valid user headers and directives with comments
+  const validUserHeaders = `#include "my_header.h"
+#include "utils/helper.h"
+#include <stdio.h> // standard I/O
+#include <math.h> /* math calculations */
+#define MAX_BUFFER 1024
+#pragma once
+int val = 42;`;
+  const res2 = parseCode(validUserHeaders);
+  assert(res2.errors.length === 0, "User headers ('\"...\"'), inline comments, and #define parse with 0 errors");
+
+  // 3. User's exact reported bug: '#incude <stdio>'
+  const userBug = `#incude <stdio>
+int main() { return 0; }`;
+  const res3 = parseCode(userBug);
+  assert(res3.errors.length >= 2, "Trapped user case '#incude <stdio>' with at least 2 syntax errors");
+  assert(res3.errors.some(e => e.message.includes('#incude') && e.message.includes('#include')),
+    "Error 1 flags misspelled directive '#incude' and suggests '#include'");
+  assert(res3.errors.some(e => e.message.includes('<stdio>') && e.message.includes('<stdio.h>')),
+    "Error 2 flags header '<stdio>' missing '.h' extension and suggests '<stdio.h>'");
+
+  // 4. Missing '.h' on standard library '#include <stdio>' and '#include <math>'
+  const missingH = `#include <stdio>
+#include <math>
+int x = 10;`;
+  const res4 = parseCode(missingH);
+  assert(res4.errors.length === 2, "Trapped missing '.h' extension on '<stdio>' and '<math>'");
+  assert(res4.errors[0].message.includes('<stdio.h>'), "Suggests '<stdio.h>' for '<stdio>'");
+  assert(res4.errors[1].message.includes('<math.h>'), "Suggests '<math.h>' for '<math>'");
+
+  // 5. Misspelled directive with valid header: '#incude <stdio.h>' and '#includ <stdlib.h>'
+  const misspelledDir = `#incude <stdio.h>
+#includ <stdlib.h>`;
+  const res5 = parseCode(misspelledDir);
+  assert(res5.errors.length === 2, "Trapped misspelled directives '#incude' and '#includ'");
+  assert(res5.errors[0].message.includes('#include'), "Suggests '#include' for '#incude'");
+
+  // 6. Missing delimiters: '#include stdio.h'
+  const noDelimiters = `#include stdio.h`;
+  const res6 = parseCode(noDelimiters);
+  assert(res6.errors.length > 0 && res6.errors[0].message.includes("enclosed in '<...>' or '\"...\"'"),
+    "Trapped '#include stdio.h' missing brackets or quotes");
+
+  // 7. Unterminated header: '#include <stdio.h'
+  const unterminated = `#include <stdio.h`;
+  const res7 = parseCode(unterminated);
+  assert(res7.errors.length > 0 && res7.errors[0].message.includes("Missing closing '>'"),
+    "Trapped unterminated header '#include <stdio.h' missing '>'");
+
+  // 8. Empty header: '#include <>' and '#include \"\"'
+  const emptyHeaders = `#include <>
+#include ""`;
+  const res8 = parseCode(emptyHeaders);
+  assert(res8.errors.length === 2 && res8.errors.every(e => e.message.includes('Empty header')),
+    "Trapped empty headers '#include <>' and '#include \"\"'");
+
+  // 9. C++ standard library header: '#include <iostream>' and '#include <vector>'
+  const cppHeaders = `#include <iostream>
+#include <vector>`;
+  const res9 = parseCode(cppHeaders);
+  assert(res9.errors.length === 2 && res9.errors.every(e => e.message.includes('C++ standard library header')),
+    "Trapped C++ headers '<iostream>' and '<vector>' and advised standard C headers");
+
+  // 10. Typo in standard library: '#include <studio.h>'
+  const typoLib = `#include <studio.h>`;
+  const res10 = parseCode(typoLib);
+  assert(res10.errors.length > 0 && res10.errors[0].message.includes('<stdio.h>'),
+    "Trapped typo '<studio.h>' and suggested '<stdio.h>'");
+
+  // 11. Unknown library header: '#include <unknown_library.h>'
+  const unknownLib = `#include <unknown_library.h>`;
+  const res11 = parseCode(unknownLib);
+  assert(res11.errors.length > 0 && res11.errors[0].message.includes('Unknown standard library header'),
+    "Trapped unknown library header '<unknown_library.h>'");
+
+  // 12. User header missing '.h': '#include \"myheader\"'
+  const badUserHeader = `#include "myheader"`;
+  const res12 = parseCode(badUserHeader);
+  assert(res12.errors.length > 0 && res12.errors[0].message.includes('.h'),
+    "Trapped user header '\"myheader\"' missing '.h' extension");
+
+  // 13. Bare '#' and bare '#include'
+  const bareDirectives = `#
+#include`;
+  const res13 = parseCode(bareDirectives);
+  assert(res13.errors.length === 2, "Trapped bare '#' and bare '#include' with 0 arguments");
+}
+
 console.log('\n========================================================');
 console.log(`Test Summary: Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}`);
 console.log('========================================================');

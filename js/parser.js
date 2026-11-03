@@ -39,6 +39,114 @@ class ParseException extends Error {
   }
 }
 
+/**
+ * Comprehensive set of standard C library headers across C89, C95, C99, C11, C23,
+ * and standard POSIX/system headers.
+ */
+export const STANDARD_C_LIBRARIES = new Set([
+  // ANSI C (C89 / C90)
+  'assert.h',
+  'ctype.h',
+  'errno.h',
+  'float.h',
+  'limits.h',
+  'locale.h',
+  'math.h',
+  'setjmp.h',
+  'signal.h',
+  'stdarg.h',
+  'stddef.h',
+  'stdio.h',
+  'stdlib.h',
+  'string.h',
+  'time.h',
+
+  // C95 Amendment 1
+  'iso646.h',
+  'wchar.h',
+  'wctype.h',
+
+  // C99
+  'complex.h',
+  'fenv.h',
+  'inttypes.h',
+  'stdbool.h',
+  'stdint.h',
+  'tgmath.h',
+
+  // C11
+  'stdalign.h',
+  'stdatomic.h',
+  'stdnoreturn.h',
+  'threads.h',
+  'uchar.h',
+
+  // C23
+  'stdbit.h',
+  'stdckdint.h',
+
+  // Common POSIX & Standard OS Headers
+  'unistd.h',
+  'fcntl.h',
+  'sys/types.h',
+  'sys/stat.h',
+  'sys/time.h',
+  'sys/wait.h',
+  'sys/socket.h',
+  'netinet/in.h',
+  'arpa/inet.h',
+  'netdb.h',
+  'conio.h',
+  'windows.h',
+  'pthread.h',
+  'memory.h',
+  'malloc.h',
+  'dirent.h',
+  'strings.h',
+  'alloca.h',
+  'utime.h'
+]);
+
+/**
+ * Common C++ headers to distinguish C++ imports and provide helpful diagnostics.
+ */
+const CPP_COMMON_HEADERS = new Set([
+  'iostream', 'vector', 'string', 'map', 'set', 'algorithm', 'cmath', 'cstdio',
+  'cstdlib', 'cstring', 'sstream', 'fstream', 'queue', 'stack', 'deque', 'list',
+  'utility', 'tuple', 'memory', 'numeric', 'functional', 'chrono', 'thread',
+  'mutex', 'condition_variable', 'type_traits', 'bitset', 'unordered_map', 'unordered_set',
+  'iostream.h', 'fstream.h', 'strstream.h'
+]);
+
+/**
+ * Valid preprocessor directives in C.
+ */
+const VALID_DIRECTIVES = new Set([
+  'include', 'define', 'undef', 'ifdef', 'ifndef', 'endif', 'else', 'elif', 'line', 'error', 'pragma'
+]);
+
+/**
+ * Helper to compute Levenshtein distance for fuzzy typo matching.
+ */
+function levenshteinDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[m][n];
+}
+
 export class Parser {
   /**
    * @param {Token[]} tokens - Stream of tokens produced by Phase 1 Lexer
@@ -200,6 +308,7 @@ export class Parser {
       if (this.previous().type === TokenType.SEMICOLON) return;
 
       switch (this.peek().type) {
+        case TokenType.PREPROCESSOR:
         case TokenType.KEYWORD_INT:
         case TokenType.KEYWORD_FLOAT:
         case TokenType.KEYWORD_DOUBLE:
@@ -244,8 +353,7 @@ export class Parser {
     // 1. Preprocessor Directive
     if (this.match(TokenType.PREPROCESSOR)) {
       const tok = this.previous();
-      this.logStep(`Parsed Preprocessor Directive: '${tok.value}'`);
-      return new ParseNode('PreprocessorDirective', tok.value, tok.line, tok.column);
+      return this.parsePreprocessorDirective(tok);
     }
 
     // 2. Typedef declaration: typedef ...
@@ -281,6 +389,347 @@ export class Parser {
 
     // 6. Otherwise, regular statement (variable decl, loop, if, assignment, etc.)
     return this.parseStatement();
+  }
+
+  /**
+   * PreprocessorDirective ::= "#" DirectiveName ( HeaderPath | MacroDef | ... )
+   * Validates preprocessor directive syntax, standard C libraries, and header paths.
+   */
+  parsePreprocessorDirective(tok) {
+    this.logStep(`Parsing Preprocessor Directive: '${tok.value}'`);
+    const node = new ParseNode('PreprocessorDirective', tok.value, tok.line, tok.column);
+
+    let raw = tok.value.trim();
+
+    // Strip trailing comments (// or /* ... */) from the directive line
+    const lineCommentIdx = raw.indexOf('//');
+    if (lineCommentIdx !== -1) {
+      raw = raw.substring(0, lineCommentIdx).trim();
+    }
+    const blockCommentIdx = raw.indexOf('/*');
+    if (blockCommentIdx !== -1) {
+      const blockEnd = raw.indexOf('*/', blockCommentIdx + 2);
+      if (blockEnd !== -1) {
+        raw = (raw.substring(0, blockCommentIdx) + raw.substring(blockEnd + 2)).trim();
+      } else {
+        raw = raw.substring(0, blockCommentIdx).trim();
+      }
+    }
+
+    if (!raw.startsWith('#')) {
+      this.recordError(
+        `Invalid preprocessor directive '${raw}'. Directives must begin with '#'.`,
+        tok.line,
+        tok.column,
+        "#<directive>",
+        raw
+      );
+      return node;
+    }
+
+    const afterHash = raw.substring(1).trim();
+    if (afterHash === '') {
+      this.recordError(
+        "Empty preprocessor directive '#'. Expected directive name such as '#include <stdio.h>'.",
+        tok.line,
+        tok.column,
+        "#include <...>",
+        raw
+      );
+      return node;
+    }
+
+    const match = afterHash.match(/^([a-zA-Z_]\w*)(.*)$/s);
+    if (!match) {
+      this.recordError(
+        `Invalid preprocessor directive '${raw}'. Expected directive identifier (e.g. '#include').`,
+        tok.line,
+        tok.column,
+        "#include",
+        raw
+      );
+      return node;
+    }
+
+    const dirName = match[1];
+    const rest = match[2].trim();
+    node.addChild(new ParseNode('DirectiveName', dirName, tok.line, tok.column));
+
+    const isInclude = dirName === 'include';
+    const isDefine = dirName === 'define';
+    const isOtherValid = VALID_DIRECTIVES.has(dirName);
+
+    // Check if directive name itself is invalid or misspelled
+    if (!isInclude && !isDefine && !isOtherValid) {
+      const lowerDir = dirName.toLowerCase();
+      const distToInclude = levenshteinDistance(lowerDir, 'include');
+      if (distToInclude <= 3 || lowerDir.startsWith('inc') || lowerDir.endsWith('clude')) {
+        this.recordError(
+          `Invalid preprocessor directive '#${dirName}'. Did you mean '#include'?`,
+          tok.line,
+          tok.column,
+          "#include",
+          `#${dirName}`
+        );
+      } else {
+        const distToDefine = levenshteinDistance(lowerDir, 'define');
+        if (distToDefine <= 2) {
+          this.recordError(
+            `Invalid preprocessor directive '#${dirName}'. Did you mean '#define'?`,
+            tok.line,
+            tok.column,
+            "#define",
+            `#${dirName}`
+          );
+        } else {
+          this.recordError(
+            `Unknown preprocessor directive '#${dirName}'. Valid directives: #include, #define, #undef, #ifdef, #ifndef, #endif, #pragma.`,
+            tok.line,
+            tok.column,
+            "#include",
+            `#${dirName}`
+          );
+        }
+      }
+    }
+
+    // If directive is include or clearly intended as include (e.g. #incude <stdio>), validate the header!
+    const lowerDir = dirName.toLowerCase();
+    const intendedAsInclude = isInclude ||
+      lowerDir.startsWith('inc') ||
+      lowerDir.endsWith('clude') ||
+      rest.startsWith('<') ||
+      rest.startsWith('"');
+
+    if (intendedAsInclude) {
+      this.validateIncludeDirective(dirName, rest, tok, node);
+    } else if (isDefine) {
+      this.validateDefineDirective(rest, tok, node);
+    }
+
+    return node;
+  }
+
+  /**
+   * Validates header inclusion syntax and library names for '#include'.
+   */
+  validateIncludeDirective(dirName, rest, tok, node) {
+    if (!rest || rest.length === 0) {
+      this.recordError(
+        `Expected header file after '#${dirName}'. Format: #include <header.h> or #include "header.h".`,
+        tok.line,
+        tok.column + dirName.length + 1,
+        "<filename.h> or \"filename.h\"",
+        "empty"
+      );
+      return;
+    }
+
+    const startsAngle = rest.startsWith('<');
+    const startsQuote = rest.startsWith('"');
+
+    if (!startsAngle && !startsQuote) {
+      const cleanName = rest.replace(/^[<"]+|[>"]+$/g, '').trim();
+      const suggested = cleanName.endsWith('.h') ? cleanName : `${cleanName}.h`;
+      this.recordError(
+        `Invalid #include syntax '${tok.value}'. Expected header path enclosed in '<...>' or '\"...\"' (e.g. '#include <${suggested}>').`,
+        tok.line,
+        tok.column,
+        `<${suggested}>`,
+        rest
+      );
+      return;
+    }
+
+    let header = '';
+    let isSystem = false;
+    let trailing = '';
+
+    if (startsAngle) {
+      isSystem = true;
+      const closingIdx = rest.indexOf('>');
+      if (closingIdx === -1) {
+        this.recordError(
+          `Unterminated header in '#${dirName}'. Missing closing '>' after '${rest}'.`,
+          tok.line,
+          tok.column,
+          `${rest}>`,
+          rest
+        );
+        return;
+      }
+      header = rest.substring(1, closingIdx).trim();
+      trailing = rest.substring(closingIdx + 1).trim();
+    } else {
+      isSystem = false;
+      const closingIdx = rest.indexOf('"', 1);
+      if (closingIdx === -1) {
+        this.recordError(
+          `Unterminated header in '#${dirName}'. Missing closing '\"' after '${rest}'.`,
+          tok.line,
+          tok.column,
+          `${rest}\"`,
+          rest
+        );
+        return;
+      }
+      header = rest.substring(1, closingIdx).trim();
+      trailing = rest.substring(closingIdx + 1).trim();
+    }
+
+    if (trailing.length > 0) {
+      this.recordError(
+        `Extra tokens after preprocessor directive: '${trailing}'.`,
+        tok.line,
+        tok.column,
+        "end of line",
+        trailing
+      );
+    }
+
+    if (header === '') {
+      this.recordError(
+        `Empty header filename in '#include' directive. Expected a valid header like <stdio.h>.`,
+        tok.line,
+        tok.column,
+        "<stdio.h>",
+        isSystem ? "<>" : '""'
+      );
+      return;
+    }
+
+    node.addChild(new ParseNode('HeaderPath', isSystem ? `<${header}>` : `"${header}"`, tok.line, tok.column));
+
+    // Validate characters in header filename
+    if (/[^a-zA-Z0-9_\-\.\/]/.test(header)) {
+      this.recordError(
+        `Invalid character in header filename '${header}'. Header names may only contain letters, numbers, underscores, dots, hyphens, and slashes.`,
+        tok.line,
+        tok.column,
+        "valid path",
+        header
+      );
+      return;
+    }
+
+    const lowerHeader = header.toLowerCase();
+    const hasHExtension = lowerHeader.endsWith('.h');
+
+    if (!hasHExtension) {
+      // Check if it's a known C++ standard header
+      if (CPP_COMMON_HEADERS.has(lowerHeader)) {
+        let suggestion = '<stdio.h>';
+        if (lowerHeader === 'string') suggestion = '<string.h>';
+        else if (lowerHeader === 'cmath') suggestion = '<math.h>';
+        else if (lowerHeader === 'cstdio') suggestion = '<stdio.h>';
+        else if (lowerHeader === 'cstdlib') suggestion = '<stdlib.h>';
+        else if (lowerHeader === 'cstring') suggestion = '<string.h>';
+        this.recordError(
+          `'${isSystem ? `<${header}>` : `"${header}"`}' is a C++ standard library header. This C mini-compiler requires standard C headers ending in '.h' (such as ${suggestion}).`,
+          tok.line,
+          tok.column,
+          suggestion,
+          header
+        );
+        return;
+      }
+
+      // Check if adding .h matches a standard C library
+      if (STANDARD_C_LIBRARIES.has(`${lowerHeader}.h`)) {
+        this.recordError(
+          `Invalid library header '<${header}>'. Standard C library headers must end with '.h'. Did you mean '<${lowerHeader}.h>'?`,
+          tok.line,
+          tok.column,
+          `<${lowerHeader}.h>`,
+          `<${header}>`
+        );
+        return;
+      }
+
+      // Any other header missing .h
+      this.recordError(
+        `Invalid library header '${isSystem ? `<${header}>` : `"${header}"`}'. Standard C library headers must end with '.h' (e.g., '<${header}.h>').`,
+        tok.line,
+        tok.column,
+        `<${header}.h>`,
+        header
+      );
+      return;
+    }
+
+    // Header has .h extension!
+    if (isSystem) {
+      if (STANDARD_C_LIBRARIES.has(lowerHeader)) {
+        this.logStep(`Validated Standard C Library: <${header}>`);
+        return;
+      }
+
+      // System header with .h that is NOT in STANDARD_C_LIBRARIES:
+      // Check for typo in standard C library names
+      let closest = null;
+      let minDistance = 999;
+      for (const stdLib of STANDARD_C_LIBRARIES) {
+        const dist = levenshteinDistance(lowerHeader, stdLib);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closest = stdLib;
+        }
+      }
+
+      if (minDistance <= 2 && closest) {
+        this.recordError(
+          `Unknown standard library header '<${header}>'. Did you mean '<${closest}>'?`,
+          tok.line,
+          tok.column,
+          `<${closest}>`,
+          `<${header}>`
+        );
+      } else {
+        this.recordError(
+          `Unknown standard library header '<${header}>'. Standard C libraries include <stdio.h>, <stdlib.h>, <string.h>, <math.h>, <ctype.h>, <stdbool.h>, <stdint.h>, etc. For custom headers, use double quotes: "${header}".`,
+          tok.line,
+          tok.column,
+          "<stdio.h>",
+          `<${header}>`
+        );
+      }
+    } else {
+      // User header: "myheader.h"
+      this.logStep(`Validated User Header: "${header}"`);
+    }
+  }
+
+  /**
+   * Validates '#define' macro definitions.
+   */
+  validateDefineDirective(rest, tok, node) {
+    if (!rest || rest.length === 0) {
+      this.recordError(
+        "Expected macro identifier after '#define'. Example: '#define MAX 100'.",
+        tok.line,
+        tok.column,
+        "#define <NAME> <VALUE>",
+        "#define"
+      );
+      return;
+    }
+    const match = rest.match(/^([a-zA-Z_]\w*)(.*)$/s);
+    if (!match) {
+      this.recordError(
+        `Invalid macro identifier in '#define ${rest}'. Identifiers must begin with a letter or underscore.`,
+        tok.line,
+        tok.column,
+        "valid identifier",
+        rest
+      );
+      return;
+    }
+    const macroName = match[1];
+    const macroVal = match[2].trim();
+    node.addChild(new ParseNode('MacroName', macroName, tok.line, tok.column));
+    if (macroVal) {
+      node.addChild(new ParseNode('MacroValue', macroVal, tok.line, tok.column));
+    }
   }
 
   /**
@@ -736,7 +1185,13 @@ export class Parser {
   parseStatement() {
     this.logStep('Entering parseStatement');
 
-    // 0. Typedef declaration inside block
+    // 0. Preprocessor Directive inside block
+    if (this.match(TokenType.PREPROCESSOR)) {
+      const tok = this.previous();
+      return this.parsePreprocessorDirective(tok);
+    }
+
+    // 0b. Typedef declaration inside block
     if (this.match(TokenType.KEYWORD_TYPEDEF)) {
       return this.parseTypedef();
     }
