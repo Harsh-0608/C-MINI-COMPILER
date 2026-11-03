@@ -31,6 +31,14 @@ export const TokenType = Object.freeze({
   KEYWORD_LONG: 'KEYWORD_LONG',
   KEYWORD_SHORT: 'KEYWORD_SHORT',
   KEYWORD_DOUBLE: 'KEYWORD_DOUBLE',
+  KEYWORD_STATIC: 'KEYWORD_STATIC',
+  KEYWORD_EXTERN: 'KEYWORD_EXTERN',
+  KEYWORD_AUTO: 'KEYWORD_AUTO',
+  KEYWORD_REGISTER: 'KEYWORD_REGISTER',
+  KEYWORD_VOLATILE: 'KEYWORD_VOLATILE',
+  KEYWORD_RESTRICT: 'KEYWORD_RESTRICT',
+  KEYWORD_INLINE: 'KEYWORD_INLINE',
+  KEYWORD_GOTO: 'KEYWORD_GOTO',
 
   // Identifiers and Literals
   IDENTIFIER: 'IDENTIFIER',
@@ -138,7 +146,15 @@ export const KEYWORDS = Object.freeze({
   'signed': TokenType.KEYWORD_SIGNED,
   'long': TokenType.KEYWORD_LONG,
   'short': TokenType.KEYWORD_SHORT,
-  'double': TokenType.KEYWORD_DOUBLE
+  'double': TokenType.KEYWORD_DOUBLE,
+  'static': TokenType.KEYWORD_STATIC,
+  'extern': TokenType.KEYWORD_EXTERN,
+  'auto': TokenType.KEYWORD_AUTO,
+  'register': TokenType.KEYWORD_REGISTER,
+  'volatile': TokenType.KEYWORD_VOLATILE,
+  'restrict': TokenType.KEYWORD_RESTRICT,
+  'inline': TokenType.KEYWORD_INLINE,
+  'goto': TokenType.KEYWORD_GOTO
 });
 
 /**
@@ -219,6 +235,14 @@ export class Token {
       case TokenType.KEYWORD_LONG: return 'Keyword (long)';
       case TokenType.KEYWORD_SHORT: return 'Keyword (short)';
       case TokenType.KEYWORD_DOUBLE: return 'Keyword (double)';
+      case TokenType.KEYWORD_STATIC: return 'Keyword (static)';
+      case TokenType.KEYWORD_EXTERN: return 'Keyword (extern)';
+      case TokenType.KEYWORD_AUTO: return 'Keyword (auto)';
+      case TokenType.KEYWORD_REGISTER: return 'Keyword (register)';
+      case TokenType.KEYWORD_VOLATILE: return 'Keyword (volatile)';
+      case TokenType.KEYWORD_RESTRICT: return 'Keyword (restrict)';
+      case TokenType.KEYWORD_INLINE: return 'Keyword (inline)';
+      case TokenType.KEYWORD_GOTO: return 'Keyword (goto)';
       case TokenType.IDENTIFIER: return 'Identifier';
       case TokenType.INTEGER_LITERAL: return 'Integer Literal';
       case TokenType.FLOAT_LITERAL: return 'Float Literal';

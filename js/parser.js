@@ -263,6 +263,44 @@ export class Parser {
     return null;
   }
 
+  isStorageClass(tok) {
+    if (!tok) return false;
+    return [
+      TokenType.KEYWORD_STATIC,
+      TokenType.KEYWORD_EXTERN,
+      TokenType.KEYWORD_AUTO,
+      TokenType.KEYWORD_REGISTER,
+      TokenType.KEYWORD_INLINE
+    ].includes(tok.type);
+  }
+
+  isTypeQualifier(tok) {
+    if (!tok) return false;
+    return [
+      TokenType.KEYWORD_CONST,
+      TokenType.KEYWORD_VOLATILE,
+      TokenType.KEYWORD_RESTRICT
+    ].includes(tok.type);
+  }
+
+  isTypeSpecifier(tok) {
+    if (!tok) return false;
+    return [
+      TokenType.KEYWORD_INT,
+      TokenType.KEYWORD_FLOAT,
+      TokenType.KEYWORD_DOUBLE,
+      TokenType.KEYWORD_CHAR,
+      TokenType.KEYWORD_VOID,
+      TokenType.KEYWORD_UNSIGNED,
+      TokenType.KEYWORD_SIGNED,
+      TokenType.KEYWORD_LONG,
+      TokenType.KEYWORD_SHORT,
+      TokenType.KEYWORD_STRUCT,
+      TokenType.KEYWORD_UNION,
+      TokenType.KEYWORD_ENUM
+    ].includes(tok.type);
+  }
+
   advance() {
     if (!this.isAtEnd()) this.pos++;
     return this.previous();
@@ -322,7 +360,15 @@ export class Parser {
         case TokenType.KEYWORD_UNION:
         case TokenType.KEYWORD_ENUM:
         case TokenType.KEYWORD_CONST:
+        case TokenType.KEYWORD_VOLATILE:
+        case TokenType.KEYWORD_RESTRICT:
+        case TokenType.KEYWORD_STATIC:
+        case TokenType.KEYWORD_EXTERN:
+        case TokenType.KEYWORD_AUTO:
+        case TokenType.KEYWORD_REGISTER:
+        case TokenType.KEYWORD_INLINE:
         case TokenType.KEYWORD_TYPEDEF:
+        case TokenType.KEYWORD_GOTO:
         case TokenType.KEYWORD_IF:
         case TokenType.KEYWORD_WHILE:
         case TokenType.KEYWORD_DO:
@@ -740,8 +786,8 @@ export class Parser {
   isFunctionDeclaration() {
     let offset = 0;
 
-    // Optional 'const'
-    if (this.peek(offset).type === TokenType.KEYWORD_CONST) {
+    // Optional storage classes and qualifiers: static, extern, inline, auto, register, const, volatile, restrict
+    while (this.isStorageClass(this.peek(offset)) || this.isTypeQualifier(this.peek(offset))) {
       offset++;
     }
 
@@ -788,8 +834,11 @@ export class Parser {
       return false;
     }
 
-    // 2. Optional pointer stars: *
-    while (this.peek(offset).type === TokenType.MULTIPLY || this.peek(offset).type === TokenType.KEYWORD_CONST) {
+    // 2. Optional pointer stars and qualifiers: * const, etc.
+    while (
+      this.peek(offset).type === TokenType.MULTIPLY ||
+      this.isTypeQualifier(this.peek(offset))
+    ) {
       offset++;
     }
 
@@ -962,11 +1011,36 @@ export class Parser {
    */
   parseFunctionDeclaration() {
     this.logStep('Entering parseFunctionDeclaration');
+    const startTok = this.peek();
+    const storageClasses = [];
+    const qualifiers = [];
+
+    while (this.isStorageClass(this.peek()) || this.isTypeQualifier(this.peek())) {
+      const tok = this.advance();
+      if (this.isStorageClass(tok)) {
+        storageClasses.push(tok.value);
+      } else {
+        qualifiers.push(tok.value);
+      }
+    }
+
     const returnTypeNode = this.parseReturnType();
+    for (const q of qualifiers) {
+      if (!returnTypeNode.value.startsWith(q + ' ')) {
+        returnTypeNode.value = `${q} ${returnTypeNode.value}`;
+      }
+    }
+
     const nameToken = this.consume(TokenType.IDENTIFIER, 'Expected function name after return type');
     this.logStep(`Parsing function: '${nameToken.value}'`);
 
-    const funcNode = new ParseNode('FunctionDeclaration', nameToken.value, nameToken.line, nameToken.column);
+    const funcNode = new ParseNode('FunctionDeclaration', nameToken.value, startTok.line, startTok.column);
+    for (const sc of storageClasses) {
+      funcNode.addChild(new ParseNode('StorageClass', sc, startTok.line, startTok.column));
+    }
+    for (const q of qualifiers) {
+      funcNode.addChild(new ParseNode('Qualifier', q, startTok.line, startTok.column));
+    }
     funcNode.addChild(returnTypeNode);
     funcNode.addChild(new ParseNode('FunctionName', nameToken.value, nameToken.line, nameToken.column));
 
@@ -996,23 +1070,26 @@ export class Parser {
   }
 
   parseReturnType() {
-    let isConst = false;
-    if (this.match(TokenType.KEYWORD_CONST)) {
-      isConst = true;
+    let qualifier = null;
+    if (this.match(TokenType.KEYWORD_CONST, TokenType.KEYWORD_VOLATILE, TokenType.KEYWORD_RESTRICT)) {
+      qualifier = this.previous().value;
     }
 
     if (this.match(TokenType.KEYWORD_VOID)) {
       const tok = this.previous();
-      let typeName = isConst ? 'const void' : 'void';
+      let typeName = qualifier ? `${qualifier} void` : 'void';
       while (this.match(TokenType.MULTIPLY)) {
         typeName += '*';
+        while (this.match(TokenType.KEYWORD_CONST, TokenType.KEYWORD_VOLATILE, TokenType.KEYWORD_RESTRICT)) {
+          typeName += ` ${this.previous().value}`;
+        }
       }
       return new ParseNode('ReturnType', typeName, tok.line, tok.column);
     }
 
     const typeNode = this.parseType('ReturnType', true);
-    if (isConst && !typeNode.value.startsWith('const ')) {
-      typeNode.value = `const ${typeNode.value}`;
+    if (qualifier && !typeNode.value.startsWith(`${qualifier} `)) {
+      typeNode.value = `${qualifier} ${typeNode.value}`;
     }
     return typeNode;
   }
@@ -1112,26 +1189,31 @@ export class Parser {
       return new ParseNode('Parameter', 'void', voidTok.line, voidTok.column);
     }
 
-    let isConst = false;
-    if (this.match(TokenType.KEYWORD_CONST)) {
-      isConst = true;
+    const storageClasses = [];
+    const qualifiers = [];
+    while (this.isStorageClass(this.peek()) || this.isTypeQualifier(this.peek())) {
+      const tok = this.advance();
+      if (this.isStorageClass(tok)) {
+        storageClasses.push(tok.value);
+      } else {
+        qualifiers.push(tok.value);
+      }
     }
 
     // 2. Check for function pointer parameter: int (*cmp)(const void*, const void*)
     if (this.isFunctionPointerParamLookahead()) {
-      return this.parseFunctionPointerParameter(isConst);
+      return this.parseFunctionPointerParameter(qualifiers.includes('const'));
     }
 
     // 3. Regular parameter
     const typeNode = this.parseType('ParamType', false);
 
-    // Optional pointer on parameter name: Stack *s, void *a, int *const a
+    // Optional pointer on parameter name: Stack *s, void *a, int *const a, int *restrict p
     let pointerCount = 0;
-    let isConstPointer = false;
     while (this.match(TokenType.MULTIPLY)) {
       pointerCount++;
-      if (this.match(TokenType.KEYWORD_CONST)) {
-        isConstPointer = true;
+      while (this.isTypeQualifier(this.peek())) {
+        qualifiers.push(this.advance().value);
       }
     }
 
@@ -1144,8 +1226,11 @@ export class Parser {
     }
 
     const paramNode = new ParseNode('Parameter', paramName || typeNode.value, typeNode.line, typeNode.column);
-    if (isConst || isConstPointer) {
-      paramNode.addChild(new ParseNode('Qualifier', 'const', typeNode.line, typeNode.column));
+    for (const sc of storageClasses) {
+      paramNode.addChild(new ParseNode('StorageClass', sc, typeNode.line, typeNode.column));
+    }
+    for (const q of qualifiers) {
+      paramNode.addChild(new ParseNode('Qualifier', q, typeNode.line, typeNode.column));
     }
     paramNode.addChild(typeNode);
     if (pointerCount > 0) {
@@ -1219,8 +1304,12 @@ export class Parser {
       return this.parseVarDeclaration();
     }
 
-    // 3. Const variable or function declaration
-    if (this.check(TokenType.KEYWORD_CONST)) {
+    // 3. Storage class or qualifier variable / function declaration:
+    // static, extern, auto, register, volatile, restrict, inline, const
+    if (
+      this.isStorageClass(this.peek()) ||
+      this.isTypeQualifier(this.peek())
+    ) {
       if (this.isFunctionDeclaration()) {
         return this.parseFunctionDeclaration();
       }
@@ -1316,6 +1405,17 @@ export class Parser {
       return new ParseNode('ContinueStatement', 'continue', tok.line, tok.column);
     }
 
+    // 15b. Jump: goto statement
+    if (this.match(TokenType.KEYWORD_GOTO)) {
+      const gotoTok = this.previous();
+      const labelTok = this.consume(TokenType.IDENTIFIER, "Expected label identifier after 'goto'");
+      this.consume(TokenType.SEMICOLON, "Expected ';' after goto label");
+      const gotoNode = new ParseNode('GotoStatement', labelTok.value, gotoTok.line, gotoTok.column);
+      gotoNode.addChild(new ParseNode('Label', labelTok.value, labelTok.line, labelTok.column));
+      this.logStep(`Completed parseGotoStatement to '${labelTok.value}'`);
+      return gotoNode;
+    }
+
     // 14. Prefix increment / decrement statement: ++i; or --i;
     if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
       const opTok = this.previous();
@@ -1341,7 +1441,22 @@ export class Parser {
       return new ParseNode('EmptyStatement', ';', tok.line, tok.column);
     }
 
-    // 18. Assignment or Method Call Statement (starting with IDENTIFIER)
+    // 18. Labeled statement (identifier followed by colon: label : statement)
+    if (this.check(TokenType.IDENTIFIER) && this.peek(1).type === TokenType.COLON) {
+      const labelTok = this.advance();
+      const colonTok = this.advance();
+      this.logStep(`Parsing labeled statement '${labelTok.value}:'`);
+      const labelNode = new ParseNode('LabeledStatement', labelTok.value, labelTok.line, labelTok.column);
+      labelNode.addChild(new ParseNode('Label', labelTok.value, labelTok.line, labelTok.column));
+      const stmt = this.check(TokenType.RBRACE)
+        ? new ParseNode('EmptyStatement', ';', colonTok.line, colonTok.column)
+        : this.parseStatement();
+      labelNode.addChild(stmt);
+      this.logStep(`Completed parseLabeledStatement '${labelTok.value}'`);
+      return labelNode;
+    }
+
+    // 19. Assignment or Method Call Statement (starting with IDENTIFIER)
     if (this.check(TokenType.IDENTIFIER)) {
       return this.parseAssignmentOrCallStatement();
     }
@@ -1366,8 +1481,8 @@ export class Parser {
     if (this.peek(1).type === TokenType.IDENTIFIER) {
       return true;
     }
-    // Followed by 'const' -> Stack const *s;
-    if (this.peek(1).type === TokenType.KEYWORD_CONST) {
+    // Followed by type qualifier -> Stack const *s; Stack volatile *s;
+    if (this.isTypeQualifier(this.peek(1))) {
       return true;
     }
     // Followed by '(' starting a function pointer -> Stack (*fp)(int);
@@ -1477,25 +1592,49 @@ export class Parser {
   }
 
   /**
-   * VarDeclaration ::= VarType VarInit ( "," VarInit )* ";"
-   */
+    * VarDeclaration ::= DeclarationSpecifiers VarInit ( "," VarInit )* ";"
+    */
   parseVarDeclaration() {
     this.logStep('Entering parseVarDeclaration');
-    let isConst = false;
-    if (this.match(TokenType.KEYWORD_CONST)) {
-      isConst = true;
+    const startTok = this.peek();
+    const storageClasses = [];
+    const qualifiers = [];
+
+    while (this.isStorageClass(this.peek()) || this.isTypeQualifier(this.peek())) {
+      const tok = this.advance();
+      if (this.isStorageClass(tok)) {
+        storageClasses.push(tok.value);
+      } else {
+        qualifiers.push(tok.value);
+      }
     }
+
     const typeNode = this.parseVarType('VarType');
-    if (isConst && !typeNode.value.startsWith('const ')) {
+
+    // Also collect trailing qualifiers on type: e.g. int const x = 10;
+    while (this.isTypeQualifier(this.peek())) {
+      qualifiers.push(this.advance().value);
+    }
+
+    if (qualifiers.includes('const') && !typeNode.value.startsWith('const ')) {
       typeNode.value = `const ${typeNode.value}`;
     }
-    const declNode = new ParseNode('VarDeclaration', null, typeNode.line, typeNode.column);
-    if (isConst) {
-      declNode.addChild(new ParseNode('Qualifier', 'const', typeNode.line, typeNode.column));
+    for (const q of qualifiers) {
+      if (q !== 'const' && !typeNode.value.includes(q)) {
+        typeNode.value = `${q} ${typeNode.value}`;
+      }
+    }
+
+    const declNode = new ParseNode('VarDeclaration', null, startTok.line, startTok.column);
+    for (const sc of storageClasses) {
+      declNode.addChild(new ParseNode('StorageClass', sc, startTok.line, startTok.column));
+    }
+    for (const q of qualifiers) {
+      declNode.addChild(new ParseNode('Qualifier', q, startTok.line, startTok.column));
     }
     declNode.addChild(typeNode);
 
-    const initList = new ParseNode('InitList', null, typeNode.line, typeNode.column);
+    const initList = new ParseNode('InitList', null, startTok.line, startTok.column);
     do {
       initList.addChild(this.parseVarInit());
     } while (this.match(TokenType.COMMA));
@@ -1514,9 +1653,9 @@ export class Parser {
     let typeName = '';
     const startTok = this.peek();
 
-    let isConst = false;
-    if (this.match(TokenType.KEYWORD_CONST)) {
-      isConst = true;
+    const qualifiers = [];
+    while (this.isTypeQualifier(this.peek())) {
+      qualifiers.push(this.advance().value);
     }
 
     // 1. struct Name, union Name, or enum Name
@@ -1578,22 +1717,27 @@ export class Parser {
       throw new ParseException(err);
     }
 
-    // Allow 'const' AFTER the base type: e.g. int const, void const, struct Node const
-    if (this.match(TokenType.KEYWORD_CONST)) {
-      isConst = true;
+    // Allow qualifiers AFTER the base type: e.g. int const, void const, struct Node const, int volatile
+    while (this.isTypeQualifier(this.peek())) {
+      qualifiers.push(this.advance().value);
     }
 
-    if (isConst && !typeName.startsWith('const ')) {
+    if (qualifiers.includes('const') && !typeName.startsWith('const ')) {
       typeName = `const ${typeName}`;
     }
+    for (const q of qualifiers) {
+      if (q !== 'const' && !typeName.includes(q)) {
+        typeName = `${q} ${typeName}`;
+      }
+    }
 
-    // Optional pointer stars attached to type: * (e.g. int*, int* const, void*)
+    // Optional pointer stars attached to type: * (e.g. int*, int* const, void*, int *volatile)
     let pointerCount = 0;
     while (this.match(TokenType.MULTIPLY)) {
       pointerCount++;
       typeName += '*';
-      if (this.match(TokenType.KEYWORD_CONST)) {
-        typeName += ' const';
+      while (this.isTypeQualifier(this.peek())) {
+        typeName += ` ${this.advance().value}`;
       }
     }
 
@@ -2615,7 +2759,8 @@ export class Parser {
   }
 
   isTypeLookahead(offset = 0) {
-    if (this.peek(offset).type === TokenType.KEYWORD_CONST) {
+    const originalOffset = offset;
+    while (this.isStorageClass(this.peek(offset)) || this.isTypeQualifier(this.peek(offset))) {
       offset++;
     }
     const tok = this.peek(offset);
@@ -2639,14 +2784,17 @@ export class Parser {
     ) {
       return true;
     }
+    if (offset > originalOffset && tok.type === TokenType.IDENTIFIER) {
+      return true;
+    }
     return false;
   }
 
   isTypeCastLookahead() {
     let offset = 1;
-    let isConst = false;
-    if (this.peek(offset).type === TokenType.KEYWORD_CONST) {
-      isConst = true;
+    let hasQualifier = false;
+    while (this.isTypeQualifier(this.peek(offset))) {
+      hasQualifier = true;
       offset++;
     }
     const tok = this.peek(offset);
@@ -2695,9 +2843,12 @@ export class Parser {
     }
 
     let starCount = 0;
-    while (this.peek(offset).type === TokenType.MULTIPLY) {
+    while (
+      this.peek(offset).type === TokenType.MULTIPLY ||
+      this.isTypeQualifier(this.peek(offset))
+    ) {
+      if (this.peek(offset).type === TokenType.MULTIPLY) starCount++;
       offset++;
-      starCount++;
     }
 
     if (this.peek(offset).type !== TokenType.RPAREN) {
@@ -2705,8 +2856,8 @@ export class Parser {
     }
 
     // For custom identifiers (e.g. Node, Stack), require at least one pointer star '*'
-    // or 'const' qualifier to distinguish from parenthesized variable expression (e.g. (arr))
-    if (isCustomId && starCount === 0 && !isConst) {
+    // or type qualifier to distinguish from parenthesized variable expression (e.g. (arr))
+    if (isCustomId && starCount === 0 && !hasQualifier) {
       return false;
     }
 

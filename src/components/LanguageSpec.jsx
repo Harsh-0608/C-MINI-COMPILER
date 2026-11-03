@@ -49,6 +49,14 @@ export function LanguageSpec() {
             <span className="chip chip-kw">enum</span>
             <span className="chip chip-kw">sizeof</span>
             <span className="chip chip-kw">const</span>
+            <span className="chip chip-kw">volatile</span>
+            <span className="chip chip-kw">restrict</span>
+            <span className="chip chip-kw">static</span>
+            <span className="chip chip-kw">extern</span>
+            <span className="chip chip-kw">auto</span>
+            <span className="chip chip-kw">register</span>
+            <span className="chip chip-kw">inline</span>
+            <span className="chip chip-kw">goto</span>
             <span className="chip chip-kw">typedef</span>
           </div>
         </div>
@@ -70,7 +78,8 @@ export function LanguageSpec() {
           <ul>
             <li><strong>Loops:</strong> <code>{'while (cond) { ... }'}</code>, <code>{'for (int i = 0; i < n; i++) { ... }'}</code></li>
             <li><strong>Do-While Loop:</strong> <code>{'do { i++; } while (i < 10);'}</code></li>
-            <li><strong>Jump Statements:</strong> <code>{'break;'}</code> and <code>{'continue;'}</code></li>
+            <li><strong>Jump Statements:</strong> <code>{'break;'}</code>, <code>{'continue;'}</code>, and <code>{'goto <label>;'}</code></li>
+            <li><strong>Labeled Statements:</strong> <code>{'my_label: statement;'}</code> or <code>{'cleanup: return 0;'}</code></li>
             <li><strong>Ternary Operator (<code>? :</code>):</strong> <code>{'max = (a > b) ? a : b;'}</code></li>
             <li><strong>Switch-Case:</strong> <code>{'switch (x) { case 1: ... break; default: ... }'}</code></li>
             <li><strong>Relational &amp; Logical:</strong> <code>==</code>, <code>!=</code>, <code>{'<'}</code>, <code>{'>'}</code>, <code>{'&&'}</code>, <code>{'||'}</code>, <code>!</code></li>
@@ -100,8 +109,10 @@ export function LanguageSpec() {
         </div>
 
         <div className="spec-card">
-          <h4>7. Pointer Expressions, Const Pointers &amp; Type Casts</h4>
+          <h4>7. Storage Classes, Qualifiers, Pointer Expressions &amp; Type Casts</h4>
           <ul>
+            <li><strong>Storage Classes:</strong> <code>{'static int count = 0;'}</code>, <code>{'extern int flag;'}</code>, <code>{'register int i = 0;'}</code>, <code>{'auto double d;'}</code></li>
+            <li><strong>Type Qualifiers:</strong> <code>{'const int c = 10;'}</code>, <code>{'volatile int reg = 0xFF;'}</code>, <code>{'int * restrict p;'}</code></li>
             <li><strong>Pointer Declarations:</strong> <code>{'int *p = &x; const void *ptr;'}</code></li>
             <li><strong>Const Pointers (All Types):</strong> <code>{'int *const a = &x;'}</code>, <code>{'const int *const b = &y;'}</code></li>
             <li><strong>Struct/Custom Const Pointers:</strong> <code>{'struct Node *const head = &n;'}</code>, <code>{'void *const buf;'}</code></li>

@@ -917,6 +917,229 @@ int x = 10;`;
   assert(res7.errors.length === 0, "Combined bitwise NOT and comma operator ('int combo = (~x, ~y);') parses with 0 errors");
 }
 
+// =========================================================================
+// Suite 23: General Data Types, Variable Names & Declaration Parsing
+// =========================================================================
+{
+  console.log('\nSuite 23: General Data Types, Variable Names & Declaration Parsing');
+
+  // 1. All standard C declaration examples from requirements
+  const stdDecls = `void testDeclarations() {
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr;
+    char str[50];
+    int d, e, f;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+  }`;
+  const res1 = parseCode(stdDecls);
+  assert(res1.errors.length === 0, "All primary declaration examples (int, float, char, double, pointers, arrays, multiple, const, static, volatile, register) parse with 0 errors");
+
+  // 2. Arbitrary variable names (underscores, mixed casing, digits)
+  const arbitraryNames = `void testArbitraryNames() {
+    int _counter = 1;
+    float temp_val2 = 2.5f;
+    double TOTAL_SUM_99 = 100.0;
+    char __alpha_beta__ = 'Z';
+    int camelCaseIdentifier = 42;
+    int x1, y2, z3;
+  }`;
+  const res2 = parseCode(arbitraryNames);
+  assert(res2.errors.length === 0, "Arbitrary identifier names (underscores, digits, camelCase, UPPERCASE) parse with 0 errors");
+
+  // 3. Multi-word composite type specifier combinations
+  const multiWordTypes = `void testMultiWordTypes() {
+    short int s1 = 10;
+    signed short int s2 = -10;
+    unsigned short int s3 = 20;
+    unsigned short s4 = 30;
+    signed char c1 = -1;
+    unsigned char c2 = 255;
+    long int l1 = 1000L;
+    signed long int l2 = -1000L;
+    unsigned long int l3 = 2000UL;
+    long long int ll1 = 10000LL;
+    signed long long int ll2 = -10000LL;
+    unsigned long long int ull1 = 20000ULL;
+    long double ld = 3.141592653589793L;
+  }`;
+  const res3 = parseCode(multiWordTypes);
+  assert(res3.errors.length === 0, "Multi-word composite type specifiers (short int, signed/unsigned char, long long int, long double) parse with 0 errors");
+
+  // 4. Same declaration structure using different valid data types
+  const typeSubstitutions = `void testTypeSubstitutions() {
+    int v1 = 42;
+    long v2 = 42;
+    short v3 = 42;
+    unsigned int v4 = 42;
+    long long int v5 = 42;
+    double v6 = 42;
+    float v7 = 42;
+  }`;
+  const res4 = parseCode(typeSubstitutions);
+  assert(res4.errors.length === 0, "Identical declaration constructs using different substituted data types parse with 0 errors");
+
+  // 5. Multiple mixed declarators in a single declaration (variables, pointers, arrays, initializers)
+  const mixedDecls = `void testMixedDeclarators() {
+    int first = 10, *second, third[50], fourth = 20;
+    char *p1, p2[100], p3 = 'X';
+    double d1 = 1.0, *d2, d3[5] = {1.0, 2.0};
+  }`;
+  const res5 = parseCode(mixedDecls);
+  assert(res5.errors.length === 0, "Mixed comma-separated declarators (variables, pointers, arrays, initializers) in one statement parse with 0 errors");
+}
+
+// =========================================================================
+// Suite 24: Storage Classes, Qualifiers & Function Prototypes/Definitions
+// =========================================================================
+{
+  console.log('\nSuite 24: Storage Classes, Qualifiers & Function Prototypes/Definitions');
+
+  // 1. Storage classes and qualifiers in local and global declarations
+  const storageQuals = `
+  static int global_counter = 0;
+  extern int external_flag;
+  static const unsigned long int MAX_BUFFER_SIZE = 4096;
+  extern volatile int interrupt_pending;
+
+  void testStorage() {
+    auto double local_d = 1.234;
+    register int fast_idx = 0;
+    volatile int mem_reg = 0xAA;
+    static int cached_result = -1;
+    const int read_only_val = 100;
+    int * restrict buf_ptr;
+    static const int local_limit = 50;
+  }`;
+  const res1 = parseCode(storageQuals);
+  assert(res1.errors.length === 0, "Storage classes (static, extern, auto, register) and qualifiers (const, volatile, restrict) parse with 0 errors");
+
+  // 2. Storage classes on function declarations and definitions
+  const storageFunctions = `
+  static int addNumbers(int a, int b) {
+    return a + b;
+  }
+  extern void printStatusMessage(void);
+  inline int computeSquare(int x) {
+    return x * x;
+  }
+  static const char* lookupCodeName(int code);
+  `;
+  const res2 = parseCode(storageFunctions);
+  assert(res2.errors.length === 0, "Functions with storage classes (static, extern, inline) and qualifiers parse with 0 errors");
+
+  // 3. Storage classes and qualifiers inside parameter lists
+  const paramQuals = `
+  void processData(register int count, volatile int *status, const char *msg, int * restrict outBuf) {
+    *status = count;
+  }
+  `;
+  const res3 = parseCode(paramQuals);
+  assert(res3.errors.length === 0, "Function parameters with register, volatile, const, and restrict parse with 0 errors");
+}
+
+// =========================================================================
+// Suite 25: Jump Statements (goto) & Labeled Statements
+// =========================================================================
+{
+  console.log('\nSuite 25: Jump Statements (goto) & Labeled Statements');
+
+  // 1. Standard goto and forward/backward labeled statements
+  const gotoProg = `void testGoto() {
+    int i = 0;
+    goto loop_start;
+
+    loop_start:
+      i++;
+      if (i < 10) goto loop_start;
+
+    if (i == 10) goto cleanup;
+
+    error_handler:
+      printf("Error\\n");
+      return;
+
+    cleanup:
+      printf("Done\\n");
+      return;
+  }`;
+  const res1 = parseCode(gotoProg);
+  assert(res1.errors.length === 0, "'goto <label>;' and '<label>: <statement>' parse with 0 errors");
+  const block = res1.cst.children[0].children.find(c => c.type === 'Block');
+  assert(block.children.some(c => c.type === 'GotoStatement'), "Contains 'GotoStatement' AST node");
+  assert(block.children.some(c => c.type === 'LabeledStatement'), "Contains 'LabeledStatement' AST node");
+
+  // 2. Multiple consecutive labels and trailing label with semicolon
+  const multiLabelProg = `void testMultiLabel() {
+    stage1:
+    stage2:
+      process();
+
+    exit_label: ;
+  }`;
+  const res2 = parseCode(multiLabelProg);
+  assert(res2.errors.length === 0, "Consecutive labels ('stage1: stage2: ...') and empty labeled statement ('exit: ;') parse with 0 errors");
+
+  // 3. Labels before blocks and control flow
+  const blockLabelProg = `void testBlockLabels() {
+    step_init: {
+      int temp = 5;
+    }
+    step_loop: for (int k = 0; k < 5; k++) {
+      if (k == 3) goto step_end;
+    }
+    step_end: return;
+  }`;
+  const res3 = parseCode(blockLabelProg);
+  assert(res3.errors.length === 0, "Labels preceding blocks and for-loops parse with 0 errors");
+
+  // 4. Arbitrary label identifiers
+  const arbitraryLabels = `void testArbitraryLabels() {
+    _L1: x = 1;
+    LABEL_RETRY: x = 2;
+    myCustomLabel123: x = 3;
+    goto _L1;
+    goto LABEL_RETRY;
+    goto myCustomLabel123;
+  }`;
+  const res4 = parseCode(arbitraryLabels);
+  assert(res4.errors.length === 0, "Arbitrary label identifiers (underscores, mixed casing, digits) parse with 0 errors");
+}
+
+// =========================================================================
+// Suite 26: Syntax Error Trapping for Declarations & Control Flow
+// =========================================================================
+{
+  console.log('\nSuite 26: Syntax Error Trapping for Declarations & Control Flow');
+
+  // 1. Missing label after 'goto'
+  const err1 = parseCode('void test() { goto ; }');
+  assert(err1.errors.length > 0 && err1.errors[0].message.includes("Expected label identifier after 'goto'"),
+    "Trapped missing label identifier after 'goto'");
+
+  // 2. Missing semicolon after 'goto <label>'
+  const err2 = parseCode('void test() { goto my_label }');
+  assert(err2.errors.length > 0 && err2.errors[0].message.includes("Expected ';' after goto label"),
+    "Trapped missing semicolon after 'goto <label>'");
+
+  // 3. Missing variable identifier after data type
+  const err3 = parseCode('void test() { int = 10; }');
+  assert(err3.errors.length > 0 && err3.errors[0].message.includes("Expected variable identifier"),
+    "Trapped missing variable identifier in 'int = 10;'");
+
+  // 4. Storage class missing type and identifier
+  const err4 = parseCode('void test() { static; }');
+  assert(err4.errors.length > 0,
+    "Trapped isolated storage class 'static;' missing type and declarator");
+}
+
 console.log('\n========================================================');
 console.log(`Test Summary: Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}`);
 console.log('========================================================');

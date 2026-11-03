@@ -185,6 +185,30 @@ if (b == 0) {
     record(suite, "Line 4: 'printf' is at (4, 3)", printTok && printTok.line === 4 && printTok.column === 3);
   }
 
+  // Suite 11: General Keywords (Storage Classes, Qualifiers, Control Flow)
+  {
+    const suite = 'Suite 11: General Keywords (Storage Classes, Qualifiers, Control Flow)';
+    const input = 'static staticVar extern external auto automobile register registration volatile volatileState restrict restricted inline inlined goto gotoLabel';
+    const { tokens, errors } = new Lexer(input).tokenize();
+    record(suite, 'No errors in keyword/identifier scanning for new keywords', errors.length === 0);
+    record(suite, "'static' is recognized as KEYWORD_STATIC", tokens[0].type === TokenType.KEYWORD_STATIC && tokens[0].value === 'static');
+    record(suite, "'staticVar' is recognized as IDENTIFIER", tokens[1].type === TokenType.IDENTIFIER && tokens[1].value === 'staticVar');
+    record(suite, "'extern' is recognized as KEYWORD_EXTERN", tokens[2].type === TokenType.KEYWORD_EXTERN && tokens[2].value === 'extern');
+    record(suite, "'external' is recognized as IDENTIFIER", tokens[3].type === TokenType.IDENTIFIER && tokens[3].value === 'external');
+    record(suite, "'auto' is recognized as KEYWORD_AUTO", tokens[4].type === TokenType.KEYWORD_AUTO && tokens[4].value === 'auto');
+    record(suite, "'automobile' is recognized as IDENTIFIER", tokens[5].type === TokenType.IDENTIFIER && tokens[5].value === 'automobile');
+    record(suite, "'register' is recognized as KEYWORD_REGISTER", tokens[6].type === TokenType.KEYWORD_REGISTER && tokens[6].value === 'register');
+    record(suite, "'registration' is recognized as IDENTIFIER", tokens[7].type === TokenType.IDENTIFIER && tokens[7].value === 'registration');
+    record(suite, "'volatile' is recognized as KEYWORD_VOLATILE", tokens[8].type === TokenType.KEYWORD_VOLATILE && tokens[8].value === 'volatile');
+    record(suite, "'volatileState' is recognized as IDENTIFIER", tokens[9].type === TokenType.IDENTIFIER && tokens[9].value === 'volatileState');
+    record(suite, "'restrict' is recognized as KEYWORD_RESTRICT", tokens[10].type === TokenType.KEYWORD_RESTRICT && tokens[10].value === 'restrict');
+    record(suite, "'restricted' is recognized as IDENTIFIER", tokens[11].type === TokenType.IDENTIFIER && tokens[11].value === 'restricted');
+    record(suite, "'inline' is recognized as KEYWORD_INLINE", tokens[12].type === TokenType.KEYWORD_INLINE && tokens[12].value === 'inline');
+    record(suite, "'inlined' is recognized as IDENTIFIER", tokens[13].type === TokenType.IDENTIFIER && tokens[13].value === 'inlined');
+    record(suite, "'goto' is recognized as KEYWORD_GOTO", tokens[14].type === TokenType.KEYWORD_GOTO && tokens[14].value === 'goto');
+    record(suite, "'gotoLabel' is recognized as IDENTIFIER", tokens[15].type === TokenType.IDENTIFIER && tokens[15].value === 'gotoLabel');
+  }
+
   return {
     results,
     total: results.length,
