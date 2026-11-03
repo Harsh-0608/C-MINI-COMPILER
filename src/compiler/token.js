@@ -82,6 +82,7 @@ export const TokenType = Object.freeze({
   BITWISE_AND: 'BITWISE_AND',   // &
   BITWISE_OR: 'BITWISE_OR',     // |
   BITWISE_XOR: 'BITWISE_XOR',   // ^
+  BITWISE_NOT: 'BITWISE_NOT',   // ~
 
   // Ternary Operator
   QUESTION: 'QUESTION',         // ?
@@ -172,7 +173,7 @@ export class Token {
       TokenType.EQUAL, TokenType.NOT_EQUAL,
       TokenType.LESS_THAN, TokenType.LESS_EQUAL, TokenType.GREATER_THAN, TokenType.GREATER_EQUAL,
       TokenType.LOGICAL_AND, TokenType.LOGICAL_OR, TokenType.LOGICAL_NOT,
-      TokenType.BITWISE_AND, TokenType.BITWISE_OR, TokenType.BITWISE_XOR,
+      TokenType.BITWISE_AND, TokenType.BITWISE_OR, TokenType.BITWISE_XOR, TokenType.BITWISE_NOT,
       TokenType.QUESTION,
       TokenType.DOT, TokenType.ARROW
     ].includes(this.type)) {
@@ -255,6 +256,7 @@ export class Token {
       case TokenType.BITWISE_AND: return 'Operator (&)';
       case TokenType.BITWISE_OR: return 'Operator (|)';
       case TokenType.BITWISE_XOR: return 'Operator (^)';
+      case TokenType.BITWISE_NOT: return 'Operator (~)';
       case TokenType.QUESTION: return 'Operator (?)';
       case TokenType.DOT: return 'Operator (.)';
       case TokenType.ARROW: return 'Operator (->)';

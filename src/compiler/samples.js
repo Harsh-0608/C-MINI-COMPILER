@@ -494,12 +494,12 @@ if (!(a > b) && a >= b) { a = 2; }`
   },
 
   'err-invalid-char': {
-    name: '8. Error: Invalid Characters (@, $, ~)',
+    name: '8. Error: Invalid Characters (@, $, \\)',
     code: `// 8. Lexical Error: Invalid Characters
 int total = 100;
 int @score = 50;   // '@' is illegal
 int price$ = 20;   // '$' is illegal
-int invalid~ = 1;  // '~' is illegal`
+int bad\\val = 1;   // '\\' is illegal`
   },
 
   'err-malformed-float': {

@@ -156,8 +156,8 @@ int b = 10;`;
     const r3 = new Lexer('int @bad = 10;').tokenize();
     record(suite, 'Trapped illegal symbol @', r3.errors.length > 0 && r3.errors[0].message.includes('@'));
 
-    const r4 = new Lexer('int x = a ~ b;').tokenize();
-    record(suite, "Trapped illegal symbol ~", r4.errors.length > 0 && r4.errors[0].message.includes('~'));
+    const r4 = new Lexer('int x = a \\ b;').tokenize();
+    record(suite, "Trapped illegal symbol \\", r4.errors.length > 0 && r4.errors[0].message.includes('\\'));
 
     const r5 = new Lexer('int y = a $ b;').tokenize();
     record(suite, "Trapped illegal symbol $", r5.errors.length > 0 && r5.errors[0].message.includes('$'));

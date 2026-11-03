@@ -54,13 +54,14 @@ export function LanguageSpec() {
         </div>
 
         <div className="spec-card">
-          <h4>3. Arithmetic, Compound Assignment, Shift &amp; Bitwise</h4>
+          <h4>3. Arithmetic, Compound Assignment, Shift, Bitwise &amp; Comma</h4>
           <ul>
             <li><strong>Arithmetic:</strong> <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code></li>
-            <li><strong>Increment/Decrement:</strong> <code>++</code>, <code>--</code> (e.g. <code>i++</code>, <code>*p++</code>, <code>(*p)++</code>)</li>
+            <li><strong>Increment/Decrement:</strong> <code>++</code>, <code>--</code> (e.g. <code>i++</code>, <code>*p++</code>, <code>(*p)++</code>, <code>++i</code>)</li>
             <li><strong>Assignment:</strong> <code>=</code>, <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>%=</code></li>
-            <li><strong>Bitwise &amp; Shifts:</strong> <code>{'&'}</code>, <code>|</code>, <code>^</code>, <code>{'<<'}</code>, <code>{'>>'}</code></li>
+            <li><strong>Bitwise Operators:</strong> <code>~</code> (Bitwise NOT / Complement e.g. <code>~x</code>, <code>~0</code>), <code>{'&'}</code>, <code>|</code>, <code>^</code>, <code>{'<<'}</code>, <code>{'>>'}</code></li>
             <li><strong>Bitwise Assignments:</strong> <code>{'&='}</code>, <code>|=</code>, <code>^=</code>, <code>{'<<='}</code>, <code>{'>>='}</code></li>
+            <li><strong>Comma Operator (<code>,</code>):</strong> Expressions (<code>{'int x = (1, 2);'}</code>, <code>{'res = (a = 5, b = 10, a + b);'}</code>), statements (<code>{'i++, j--;'}</code>, <code>{'a = 1, b = 2;'}</code>), and loops (<code>{'for (i = 0, j = 10; i < j; i++, j--)'}</code>)</li>
           </ul>
         </div>
 

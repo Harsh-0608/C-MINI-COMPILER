@@ -352,6 +352,10 @@ export class Lexer {
         this.advance();
         this.tokens.push(new Token(TokenType.COMMA, ',', startLine, startCol));
         return;
+      case '~':
+        this.advance();
+        this.tokens.push(new Token(TokenType.BITWISE_NOT, '~', startLine, startCol));
+        return;
       default:
         const invalidChar = this.advance();
         this.errors.push(new LexicalError(

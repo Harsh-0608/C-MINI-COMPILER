@@ -1320,10 +1320,9 @@ export class Parser {
     if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
       const opTok = this.previous();
       const operand = this.parseUnary();
-      this.consume(TokenType.SEMICOLON, "Expected ';' after statement");
       const stmt = new ParseNode('UpdateStatement', opTok.value, opTok.line, opTok.column);
       stmt.addChild(operand);
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     // 15. Return statement
@@ -1388,10 +1387,9 @@ export class Parser {
     // Case 1: Postfix increment/decrement: *p++; or *p--;
     if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
       const opTok = this.previous();
-      this.consume(TokenType.SEMICOLON, `Expected ';' after '${opTok.value}'`);
       const stmt = new ParseNode('UpdateStatement', opTok.value, starTok.line, starTok.column);
       stmt.addChild(derefTarget);
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     // Case 2: Just *p; (evaluated for side-effects, e.g. *p++; where ++ was inside unary)
@@ -1405,13 +1403,11 @@ export class Parser {
     const assignTok = this.matchAssignmentOperator();
     if (assignTok) {
       const valExpr = this.parseExpression();
-      this.consume(TokenType.SEMICOLON, "Expected ';' after assignment");
-
       const stmt = new ParseNode('AssignmentStatement', assignTok.value, starTok.line, starTok.column);
       stmt.addChild(derefTarget);
       stmt.addChild(valExpr);
       this.logStep('Completed pointer dereference assignment');
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     const cur = this.peek();
@@ -1431,21 +1427,19 @@ export class Parser {
     // Case 1: Postfix increment/decrement: (*p)++; or (*p)--;
     if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
       const opTok = this.previous();
-      this.consume(TokenType.SEMICOLON, `Expected ';' after '${opTok.value}'`);
       const stmt = new ParseNode('UpdateStatement', opTok.value, startTok.line, startTok.column);
       stmt.addChild(expr);
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     // Case 2: Assignment: (*p) = 20; or (*(p + 1)) += 5;
     const assignTok = this.matchAssignmentOperator();
     if (assignTok) {
       const valExpr = this.parseExpression();
-      this.consume(TokenType.SEMICOLON, "Expected ';' after assignment");
       const stmt = new ParseNode('AssignmentStatement', assignTok.value, startTok.line, startTok.column);
       stmt.addChild(expr);
       stmt.addChild(valExpr);
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     // Case 3: Direct semicolon: ((void)0);
@@ -1812,6 +1806,21 @@ export class Parser {
    *   obj.member = val;
    *   ptr->member = val;
    */
+  finishExpressionStatementWithComma(firstStmt) {
+    if (this.match(TokenType.COMMA)) {
+      const commaTok = this.previous();
+      const commaNode = new ParseNode('CommaStatement', ',', commaTok.line, commaTok.column);
+      commaNode.addChild(firstStmt);
+      do {
+        commaNode.addChild(this.parseAssignmentExpression());
+      } while (this.match(TokenType.COMMA));
+      this.consume(TokenType.SEMICOLON, "Expected ';' after expression statement");
+      return commaNode;
+    }
+    this.consume(TokenType.SEMICOLON, "Expected ';' after statement");
+    return firstStmt;
+  }
+
   parseAssignmentOrCallStatement() {
     this.logStep('Entering parseAssignmentOrCallStatement');
     const idToken = this.advance(); // consume IDENTIFIER
@@ -1819,19 +1828,17 @@ export class Parser {
     // Case A: Simple Function / Method Call -> id(arg1, arg2);
     if (this.check(TokenType.LPAREN)) {
       const callNode = this.finishMethodCall(idToken);
-      this.consume(TokenType.SEMICOLON, "Expected ';' after function call");
       const stmtNode = new ParseNode('CallStatement', idToken.value, idToken.line, idToken.column);
       stmtNode.addChild(callNode);
-      return stmtNode;
+      return this.finishExpressionStatementWithComma(stmtNode);
     }
 
     // Case Postfix Update: id++; or id--;
     if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
       const opTok = this.previous();
-      this.consume(TokenType.SEMICOLON, `Expected ';' after '${opTok.value}'`);
       const stmt = new ParseNode('UpdateStatement', opTok.value, idToken.line, idToken.column);
       stmt.addChild(new ParseNode('Identifier', idToken.value, idToken.line, idToken.column));
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     // Case B: Standard Single Variable Assignment -> x = expr; or x += expr;
@@ -1839,13 +1846,11 @@ export class Parser {
     if (assignTok) {
       this.logStep(`Parsing assignment '${assignTok.value}' to '${idToken.value}'`);
       const valExpr = this.parseExpression();
-      this.consume(TokenType.SEMICOLON, "Expected ';' after assignment");
-
       const stmt = new ParseNode('AssignmentStatement', assignTok.value, assignTok.line, assignTok.column);
       stmt.addChild(new ParseNode('Identifier', idToken.value, idToken.line, idToken.column));
       stmt.addChild(valExpr);
       this.logStep(`Completed assignment to '${idToken.value}'`);
-      return stmt;
+      return this.finishExpressionStatementWithComma(stmt);
     }
 
     // Case C: Array or Member Access chain:
@@ -1867,8 +1872,6 @@ export class Parser {
         const arrAssignTok = this.matchAssignmentOperator();
         if (arrAssignTok) {
           const valExpr = this.parseExpression();
-          this.consume(TokenType.SEMICOLON, "Expected ';' after assignment");
-
           const stmt = new ParseNode('ArrayAssignment', arrAssignTok.value, arrAssignTok.line, arrAssignTok.column);
           const targetNode = new ParseNode('ArrayTarget', idToken.value, idToken.line, idToken.column);
           targetNode.addChild(new ParseNode('Identifier', idToken.value, idToken.line, idToken.column));
@@ -1877,7 +1880,7 @@ export class Parser {
           stmt.addChild(targetNode);
           stmt.addChild(valExpr);
           this.logStep(`Completed array assignment '${idToken.value}[...]'`);
-          return stmt;
+          return this.finishExpressionStatementWithComma(stmt);
         }
 
         // Otherwise, it continues into a chained postfix access (e.g. tokens[tokenCount].type)
@@ -1890,29 +1893,25 @@ export class Parser {
         const postAssignTok = this.matchAssignmentOperator();
         if (postAssignTok) {
           const valExpr = this.parseExpression();
-          this.consume(TokenType.SEMICOLON, "Expected ';' after assignment");
-
           const stmt = new ParseNode('MemberAssignment', postAssignTok.value, postAssignTok.line, postAssignTok.column);
           stmt.addChild(target);
           stmt.addChild(valExpr);
           this.logStep(`Completed member assignment for '${idToken.value}'`);
-          return stmt;
+          return this.finishExpressionStatementWithComma(stmt);
         }
 
         if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
           const opTok = this.previous();
-          this.consume(TokenType.SEMICOLON, `Expected ';' after '${opTok.value}'`);
           const stmt = new ParseNode('UpdateStatement', opTok.value, idToken.line, idToken.column);
           stmt.addChild(target);
-          return stmt;
+          return this.finishExpressionStatementWithComma(stmt);
         }
 
         if (this.check(TokenType.LPAREN)) {
           const callNode = this.finishMethodCallOnTarget(target);
-          this.consume(TokenType.SEMICOLON, "Expected ';' after method call");
           const stmt = new ParseNode('CallStatement', target.value, idToken.line, idToken.column);
           stmt.addChild(callNode);
-          return stmt;
+          return this.finishExpressionStatementWithComma(stmt);
         }
 
         const cur = this.peek();
@@ -1931,29 +1930,25 @@ export class Parser {
       const memAssignTok = this.matchAssignmentOperator();
       if (memAssignTok) {
         const valExpr = this.parseExpression();
-        this.consume(TokenType.SEMICOLON, "Expected ';' after assignment");
-
         const stmt = new ParseNode('MemberAssignment', memAssignTok.value, memAssignTok.line, memAssignTok.column);
         stmt.addChild(target);
         stmt.addChild(valExpr);
         this.logStep(`Completed member assignment for '${idToken.value}'`);
-        return stmt;
+        return this.finishExpressionStatementWithComma(stmt);
       }
 
       if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
         const opTok = this.previous();
-        this.consume(TokenType.SEMICOLON, `Expected ';' after '${opTok.value}'`);
         const stmt = new ParseNode('UpdateStatement', opTok.value, idToken.line, idToken.column);
         stmt.addChild(target);
-        return stmt;
+        return this.finishExpressionStatementWithComma(stmt);
       }
 
       if (this.check(TokenType.LPAREN)) {
         const callNode = this.finishMethodCallOnTarget(target);
-        this.consume(TokenType.SEMICOLON, "Expected ';' after method call");
         const stmt = new ParseNode('CallStatement', target.value, idToken.line, idToken.column);
         stmt.addChild(callNode);
-        return stmt;
+        return this.finishExpressionStatementWithComma(stmt);
       }
 
       const cur = this.peek();
@@ -2100,7 +2095,7 @@ export class Parser {
       initClause.addChild(varDecl);
     } else {
       this.logStep('Parsing expression in for-loop init');
-      const initExpr = this.parseForStepExpression();
+      const initExpr = this.parseCommaExpression();
       this.consume(TokenType.SEMICOLON, "Expected ';' after for-loop initialization");
       initClause.addChild(initExpr);
     }
@@ -2118,11 +2113,11 @@ export class Parser {
     forNode.addChild(condClause);
 
     // 3. Step / Update clause:
-    // Can be: i++ or i = i + 1 or ++i or empty
+    // Can be: i++ or i = i + 1 or ++i or multiple comma-separated steps
     const stepClause = new ParseNode('ForUpdate', null, forToken.line, forToken.column);
     if (!this.check(TokenType.RPAREN)) {
       this.logStep('Parsing step expression in for-loop');
-      const stepExpr = this.parseForStepExpression();
+      const stepExpr = this.parseCommaExpression();
       stepClause.addChild(stepExpr);
     }
     this.consume(TokenType.RPAREN, "Expected ')' after for-loop clauses");
@@ -2263,7 +2258,7 @@ export class Parser {
     const retNode = new ParseNode('ReturnStatement', 'return', retToken.line, retToken.column);
 
     if (!this.check(TokenType.SEMICOLON)) {
-      retNode.addChild(this.parseExpression());
+      retNode.addChild(this.parseCommaExpression());
     }
 
     this.consume(TokenType.SEMICOLON, "Expected ';' after return statement");
@@ -2301,7 +2296,7 @@ export class Parser {
      ========================================================================= */
 
   parseCondition() {
-    return this.parseConditional();
+    return this.parseCommaExpression();
   }
 
   /**
@@ -2459,8 +2454,61 @@ export class Parser {
      Arithmetic Expression Precedence Climbing
      ========================================================================= */
 
+  /**
+   * AssignmentExpression ::= UnaryExpression AssignmentOperator AssignmentExpression
+   *                        | ConditionalExpression
+   */
+  parseAssignmentExpression() {
+    if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
+      const op = this.previous();
+      const right = this.parseUnary();
+      const node = new ParseNode('PrefixExpression', op.value, op.line, op.column);
+      node.addChild(right);
+      return node;
+    }
+
+    let expr = this.parseConditional();
+
+    const assignTok = this.matchAssignmentOperator();
+    if (assignTok) {
+      const valExpr = this.parseAssignmentExpression();
+      const node = new ParseNode('AssignmentExpression', assignTok.value, assignTok.line, assignTok.column);
+      node.addChild(expr);
+      node.addChild(valExpr);
+      return node;
+    }
+
+    if (this.match(TokenType.INCREMENT, TokenType.DECREMENT)) {
+      const op = this.previous();
+      const node = new ParseNode('PostfixExpression', op.value, op.line, op.column);
+      node.addChild(expr);
+      return node;
+    }
+
+    return expr;
+  }
+
+  /**
+   * CommaExpression ::= AssignmentExpression ( "," AssignmentExpression )*
+   */
+  parseCommaExpression() {
+    let expr = this.parseAssignmentExpression();
+
+    if (this.match(TokenType.COMMA)) {
+      const commaTok = this.previous();
+      const commaNode = new ParseNode('CommaExpression', ',', commaTok.line, commaTok.column);
+      commaNode.addChild(expr);
+      do {
+        commaNode.addChild(this.parseAssignmentExpression());
+      } while (this.match(TokenType.COMMA));
+      return commaNode;
+    }
+
+    return expr;
+  }
+
   parseExpression() {
-    return this.parseCondition(); // Allows condition/expression interchangeability
+    return this.parseConditional();
   }
 
   parseAdditive() {
@@ -2546,10 +2594,16 @@ export class Parser {
       return castNode;
     }
 
-    // 4. Unary !, -, +, *, & (Dereference, AddressOf, UnaryExpression)
-    if (this.match(TokenType.LOGICAL_NOT, TokenType.MINUS, TokenType.PLUS, TokenType.MULTIPLY, TokenType.BITWISE_AND)) {
+    // 4. Unary !, ~, -, +, *, & (Dereference, AddressOf, UnaryExpression, BitwiseNotExpression)
+    if (this.match(TokenType.LOGICAL_NOT, TokenType.BITWISE_NOT, TokenType.MINUS, TokenType.PLUS, TokenType.MULTIPLY, TokenType.BITWISE_AND)) {
       const op = this.previous();
-      const nodeName = op.type === TokenType.MULTIPLY ? 'Dereference' : op.type === TokenType.BITWISE_AND ? 'AddressOf' : 'UnaryExpression';
+      const nodeName = op.type === TokenType.MULTIPLY
+        ? 'Dereference'
+        : op.type === TokenType.BITWISE_AND
+        ? 'AddressOf'
+        : op.type === TokenType.BITWISE_NOT
+        ? 'BitwiseNotExpression'
+        : 'UnaryExpression';
       this.logStep(`Matched unary operator '${op.value}' (${nodeName})`);
       const right = this.parseUnary();
       const node = new ParseNode(nodeName, op.value, op.line, op.column);
@@ -2732,7 +2786,7 @@ export class Parser {
     if (this.match(TokenType.LPAREN)) {
       const openParen = this.previous();
       this.logStep("Matched '(' in expression");
-      const expr = this.parseExpression();
+      const expr = this.parseCommaExpression();
       this.consume(TokenType.RPAREN, "Expected ')' after parenthesized expression");
       const groupNode = new ParseNode('ParenGroup', '()', openParen.line, openParen.column);
       groupNode.addChild(expr);

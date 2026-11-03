@@ -827,6 +827,96 @@ int x = 10;`;
   assert(res13.errors.length === 2, "Trapped bare '#' and bare '#include' with 0 arguments");
 }
 
+// =========================================================================
+// Suite 22: Comma Operator & Bitwise NOT Operator (~)
+// =========================================================================
+{
+  console.log('\nSuite 22: Comma Operator & Bitwise NOT Operator (~)');
+
+  // 1. Bitwise NOT in variable declarations and expressions
+  const bitwiseNotCode = `void testBitwiseNot() {
+    int mask = ~x;
+    int inv = ~0;
+    int a = ~b & 0xFF;
+    int shifted = ~(1 << 3);
+    int doubleNot = ~~x;
+    if (~flags) {
+      val = ~val;
+    }
+  }`;
+  const res1 = parseCode(bitwiseNotCode);
+  assert(res1.errors.length === 0, "Bitwise NOT ('~') in declarations, expressions, shifts, and conditions parses with 0 errors");
+
+  // 2. Comma operator in parenthesized expressions
+  const parenCommaCode = `void testParenComma() {
+    int x = (1, 2);
+    int res = (a = 5, b = 10, a + b);
+    int upd = (x++, y++);
+    int multi = (1, 2, 3, 4, 5);
+  }`;
+  const res2 = parseCode(parenCommaCode);
+  assert(res2.errors.length === 0, "Comma operator in parenthesized expressions ('(1, 2)', '(a = 5, b = 10, a + b)') parses with 0 errors");
+
+  // 3. Comma operator in standalone statements
+  const stmtCommaCode = `void testStmtComma() {
+    i++, j--;
+    a = 1, b = 2, c = 3;
+    ++x, ++y;
+    printf("a"), printf("b");
+  }`;
+  const res3 = parseCode(stmtCommaCode);
+  assert(res3.errors.length === 0, "Comma operator in standalone statements ('i++, j--;', 'a = 1, b = 2, c = 3;') parses with 0 errors");
+
+  // 4. Comma operator in for-loop init and update clauses
+  const forCommaCode = `void testForComma() {
+    for (i = 0, j = 10; i < j; i++, j--) {
+      sum += i;
+    }
+    for (int i = 0, j = 10; i < j; i++, j--) {
+      total += j;
+    }
+    for (a = 0, b = 10, c = 20; a < 100; a += 1, b -= 1, c += 2) {
+      work();
+    }
+  }`;
+  const res4 = parseCode(forCommaCode);
+  assert(res4.errors.length === 0, "Comma operator in for-loop init and update ('for (i = 0, j = 10; ...; i++, j--)') parses with 0 errors");
+
+  // 5. Comma operator in while and if conditions
+  const condCommaCode = `void testCondComma() {
+    while (a = get(), a != 0) {
+      process(a);
+    }
+    if (x = compute(), x > 0) {
+      display(x);
+    }
+  }`;
+  const res5 = parseCode(condCommaCode);
+  assert(res5.errors.length === 0, "Comma operator in while and if conditions ('while (a = get(), a != 0)') parses with 0 errors");
+
+  // 6. Comma operator in return statements
+  const returnCommaCode = `int testReturnComma() {
+    return (cleanup(), result);
+  }
+  int testReturnDirectComma() {
+    return a, b;
+  }`;
+  const res6 = parseCode(returnCommaCode);
+  assert(res6.errors.length === 0, "Comma operator in return statements ('return (cleanup(), result);', 'return a, b;') parses with 0 errors");
+
+  // 7. Combined Bitwise NOT and Comma Operator
+  const combinedCode = `void testCombined() {
+    int combo = (~x, ~y);
+    int mask1, mask2;
+    mask1 = ~a, mask2 = ~b;
+    for (i = ~0, j = 0; j < 10; i = ~i, j++) {
+      val = (~x & ~y, ~z);
+    }
+  }`;
+  const res7 = parseCode(combinedCode);
+  assert(res7.errors.length === 0, "Combined bitwise NOT and comma operator ('int combo = (~x, ~y);') parses with 0 errors");
+}
+
 console.log('\n========================================================');
 console.log(`Test Summary: Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}`);
 console.log('========================================================');
