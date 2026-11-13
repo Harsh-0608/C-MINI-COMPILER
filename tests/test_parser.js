@@ -1,5 +1,5 @@
 /**
- * Automated test suite for MINICOMPILER Phase 2 (Syntax Analysis)
+ * Automated test suite for MINIPARSER Phase 2 (Syntax Analysis)
  * Can be executed with: node tests/test_parser.js or npm run test:parser
  */
 
@@ -31,7 +31,7 @@ function parseCode(source) {
 }
 
 console.log('========================================================');
-console.log('   MINICOMPILER (React Edition) - Stage 2 Parser Tests');
+console.log('   MINIPARSER (React Edition) - Stage 2 Parser Tests');
 console.log('========================================================\n');
 
 // ---------------------------------------------------------------------

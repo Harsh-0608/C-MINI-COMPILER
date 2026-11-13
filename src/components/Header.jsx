@@ -14,7 +14,7 @@ export function Header({
       <div className="brand">
         <div className="brand-icon">⚡</div>
         <div>
-          <h1>MINICOMPILER</h1>
+          <h1>MINIPARSER</h1>
           <p className="subtitle">Compiler Design Lab • React Edition • Phase 1: Lexer & Phase 2: Parser</p>
         </div>
       </div>

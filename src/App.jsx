@@ -291,7 +291,7 @@ export function App() {
       <footer className="app-footer">
         <div className="footer-left">
           <span>
-            MINICOMPILER &bull; Phase 1 (Lexer) &bull; Phase 2 (Recursive Descent Parser)
+            MINIPARSER &bull; Phase 1 (Lexer) &bull; Phase 2 (Recursive Descent Parser)
           </span>
         </div>
         <div className="footer-right">

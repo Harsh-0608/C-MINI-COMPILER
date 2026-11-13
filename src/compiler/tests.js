@@ -1,5 +1,5 @@
 /**
- * Automated test suite runner for MINICOMPILER Phase 1 (Lexical Analysis).
+ * Automated test suite runner for MINIPARSER Phase 1 (Lexical Analysis).
  */
 
 import { Lexer } from './lexer.js';

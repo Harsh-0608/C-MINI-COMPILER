@@ -1,12 +1,12 @@
 /**
- * Automated test suite for MINICOMPILER Phase 1 (Lexical Analysis)
+ * Automated test suite for MINIPARSER Phase 1 (Lexical Analysis)
  * Can be executed with: node tests/test_lexer.js or npm test
  */
 
 import { runAllTests } from '../src/compiler/tests.js';
 
 console.log('========================================================');
-console.log('   MINICOMPILER (React Edition) - Stage 1 Lexer Tests');
+console.log('   MINIPARSER (React Edition) - Stage 1 Lexer Tests');
 console.log('========================================================\n');
 
 const testSuite = runAllTests();

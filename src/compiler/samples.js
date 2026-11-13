@@ -27,7 +27,66 @@ int main() {
     qsort(arr, n, sizeof(int), compare);
 
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'enum-pointer-demo': {
@@ -75,7 +134,66 @@ int main() {
     char *ptr = (char*)p;
 
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'dowhile-types-demo': {
@@ -121,7 +239,66 @@ int main() {
     }
 
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'ternary-compound-demo': {
@@ -207,7 +384,66 @@ int main() {
     int res = processCommand(op, 15);
     printf("Result: %d\\n", res);
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'for-loop-demo': {
@@ -292,7 +528,66 @@ int main() {
     push(&s, *ptr);
 
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'member-access': {
@@ -374,7 +669,66 @@ int main() {
     printf("Sum: %d\\n", result);
 
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'methods-modulo-conditions': {
@@ -404,13 +758,72 @@ int main() {
     }
 
     return 0;
-}`
+}
+`
+  },
+
+  'general-c-demo': {
+    name: '4. General C Syntax: Storage Classes, Qualifiers, Goto & Labels',
+    code: `// General C Syntax: Storage Classes (static, extern, auto, register),
+// Type Qualifiers (const, volatile, restrict), Goto & Labeled Statements
+#include <stdio.h>
+
+// 1. Global declarations with storage classes and qualifiers
+static int global_counter = 0;
+extern int system_bus_ready;
+static const unsigned long int MAX_BUFFER = 4096;
+
+// 2. Function prototype and definition with storage classes
+static int computeSum(int a, int b);
+static int computeSum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // 3. Various data types and storage classes
+    int a = 10;
+    float b = 10.5f;
+    char c = 'A';
+    double value = 20.5;
+    unsigned int x = 100;
+    long long int y = 1000LL;
+    int *ptr = &a;
+    char str[50] = "Hello C Mini Parser";
+    int p, q, r;
+    const int c_val = 10;
+    static int s_val = 10;
+    volatile int v_val = 20;
+    register int r_val = 30;
+
+    // 4. Goto and Labeled Statements
+    int i = 0;
+    goto loop_entry;
+
+loop_entry:
+    i++;
+    if (i < 5) {
+        goto loop_entry;
+    }
+
+    if (i == 5) {
+        goto finished;
+    }
+
+error_handler:
+    printf("An error occurred\\n");
+    return -1;
+
+finished:
+    printf("Completed successfully: i = %d\\n", i);
+    return 0;
+}
+`
   },
 
   'no-library-demo': {
     name: '2. Without Libraries (Libraries Can Be Missed)',
     code: `// 2. Program without any #include or library imports
-// In MINICOMPILER, library imports can be completely missed/omitted!
+// In MINIPARSER, library imports can be completely missed/omitted!
 int add(int a, int b) {
     return a + b;
 }

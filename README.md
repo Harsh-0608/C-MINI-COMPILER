@@ -1,4 +1,4 @@
-# MINICOMPILER — Phases 1 & 2 (Lexical & Syntax Analysis)
+# MINIPARSER — Phases 1 & 2 (Lexical & Syntax Analysis)
 
 An interactive, educational compiler front-end built in **React** (Vite + React 18) for college Compiler Design laboratory examinations and viva voce.
 
@@ -91,7 +91,7 @@ This project implements:
 ## 3. Project File Structure & Responsibilities
 
 ```text
-MINICOMPILER/
+MINIPARSER/
 ├── package.json              # Scripts: test:lexer, test:parser, test, dev, build
 ├── vite.config.js            # Vite bundler configuration
 ├── index.html                # Vite HTML entry point
@@ -167,13 +167,13 @@ npm test
 ### Verified Test Results:
 ```text
 ========================================================
-   MINICOMPILER (React Edition) - Stage 1 Lexer Tests
+   MINIPARSER (React Edition) - Stage 1 Lexer Tests
 ========================================================
 Test Summary: Total: 60 | Passed: 60 | Failed: 0 (100%)
 🎉 ALL STAGE 1 LEXER TESTS PASSED!
 
 ========================================================
-   MINICOMPILER (React Edition) - Stage 2 Parser Tests
+   MINIPARSER (React Edition) - Stage 2 Parser Tests
 ========================================================
 Test Summary: Total: 53 | Passed: 53 | Failed: 0 (100%)
 🎉 ALL STAGE 2 PARSER TESTS PASSED!

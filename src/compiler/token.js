@@ -1,5 +1,5 @@
 /**
- * MINICOMPILER - Phase 1: Lexical Analysis
+ * MINIPARSER - Phase 1: Lexical Analysis
  * token.js: Defines all token types, keyword maps, and the Token class.
  */
 

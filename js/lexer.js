@@ -1,5 +1,5 @@
 /**
- * MINICOMPILER - Phase 1: Lexical Analysis
+ * MINIPARSER - Phase 1: Lexical Analysis
  * lexer.js: Tokenizer that converts raw source code into a stream of tokens.
  */
 

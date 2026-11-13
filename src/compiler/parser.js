@@ -1,5 +1,5 @@
 /**
- * MINICOMPILER - Phase 2: Syntax Analysis
+ * MINIPARSER - Phase 2: Syntax Analysis
  * parser.js: Recursive-Descent Parser consuming tokens from Phase 1.
  * Produces a concrete parse tree (CST/AST) and detailed syntax diagnostics.
  */

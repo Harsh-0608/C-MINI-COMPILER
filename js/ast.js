@@ -1,5 +1,5 @@
 /**
- * MINICOMPILER - Phase 2: Syntax Analysis
+ * MINIPARSER - Phase 2: Syntax Analysis
  * ast.js: Represents Concrete Syntax Tree (Parse Tree) nodes.
  */
 
